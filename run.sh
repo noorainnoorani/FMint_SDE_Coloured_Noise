@@ -32,7 +32,7 @@ export HF_HOME=/export/jyuan98/.cache/huggingface
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 CUDA_VISIBLE_DEVICES='1,2' python3 run.py --problem 'icon_lm' --epochs 1 \
-  --train_batch_size 32 --train_data_dirs '/export/jyuan98/FMint_SDE/data_preparation/Jan_27_icon_sde_pretrain' \
+  --train_batch_size 32 --train_data_dirs '/export/nnoorani/FMint_SDE_Coloured_Noise/data_preparation/Jan_27_icon_sde_pretrain' \
   --model_config_filename 'model_lm_config.json' \
   --train_config_filename 'train_lm_config.json' \
   --test_config_filename 'test_lm_config.json' \
