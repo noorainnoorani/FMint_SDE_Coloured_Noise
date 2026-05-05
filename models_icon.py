@@ -9,7 +9,8 @@ from einshape import jax_einshape as einshape
 import dataclasses
 import jax.tree_util as tree
 
-def build_index_fn(demo_max_num, demo_num, demo_cond_len, demo_qoi_len, quest_cond_len):
+def build_index_fn(demo_max_num, demo_num, demo_cond_len, demo_qoi_len, quest_cond_len): 
+	#cond = condition, the input of the model; qoi = quantity of interest, the output of the model
 	'''
 	@params:
 		demo_num: int, number of demonstrations

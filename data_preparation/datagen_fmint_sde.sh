@@ -35,9 +35,9 @@ traineqns=1500
 # CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
 #     --caption_mode train --name train --eqns $traineqns --eqn_types inhomogeneous_ornsteinuhlenbeck \
 #     --length 20000 --dt 0.001 --nv_step 100 --seed 108 &&
-# CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
-#     --caption_mode train --name train --eqns $traineqns --eqn_types fluxgate_sensor \
-#     --length 20000 --dt 1e-3 --nv_step 100 --seed 109 &&
+CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
+    --caption_mode train --name train --eqns $traineqns --eqn_types fluxgate_sensor \
+    --length 20000 --dt 1e-3 --nv_step 100 --seed 109 &&
 # CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
 #     --caption_mode train --name train --eqns $traineqns --eqn_types stochastic_lorenz \
 #     --length 5000 --dt 1e-4 --nv_step 100 --seed 110 &&
@@ -75,9 +75,9 @@ traineqns=1500
 # CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
 #     --caption_mode test --name test --eqns $testeqns --quests $testquests --eqn_types fluxgate_sensor \
 #     --length 20000 --dt 1e-3 --nv_step 100 --seed 209 &&
-CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
-    --caption_mode test --name test --eqns $testeqns --quests $testquests --eqn_types stochastic_lorenz \
-    --length 20000 --dt 1.08e-5 --nv_step 100 --seed 210 &&
+# CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
+#     --caption_mode test --name test --eqns $testeqns --quests $testquests --eqn_types stochastic_lorenz \
+#     --length 20000 --dt 1.08e-5 --nv_step 100 --seed 210 &&
 # CUDA_VISIBLE_DEVICES=$gpu python3 datagen_fmint_sde.py --dir $dir \
 #     --caption_mode test --name test --eqns $testeqns --quests $testquests --eqn_types predator_prey \
 #     --length 2000 --dt 0.005 --nv_step 10 --seed 211 &&

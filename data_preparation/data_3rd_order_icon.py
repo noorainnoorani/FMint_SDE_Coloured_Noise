@@ -5,6 +5,7 @@ from functools import partial
 import data_utils
 from einshape import jax_einshape as einshape
 
+# Ground truth dynamics functions and data generation for 3rd order systems (Lorenz, Rossler, Thomas attractors)
 def rk4_step(y,t, dt, rhs):
 	y = jnp.array(y)
 	k1 = dt * rhs(t,y)
@@ -14,6 +15,7 @@ def rk4_step(y,t, dt, rhs):
 	y_next = y + (1/6) * (k1 + 2 * k2 + 2 * k3 + k4)
 	return y_next
 
+# Coarse time step integration for 3rd order systems, used for generating training data with large time steps
 def euler_step(y, t, dt, rhs):
 	y_next = y + dt * rhs(t, y)
 	return y_next
