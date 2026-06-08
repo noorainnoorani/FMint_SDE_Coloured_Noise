@@ -1,0 +1,559 @@
+REPRODUCING FMint-SDE PAPER RESULTS WITH THE CURRENT REPO
+==========================================================
+
+This file is a practical walkthrough for using the scripts that already exist
+in this repository to prepare data, train FMint-SDE, fine-tune it, and evaluate
+the results reported in the paper.
+
+This tutorial does not require changing the Python model code. The current shell
+scripts do contain hard-coded cluster paths, so for a new cluster you should copy
+the scripts you want to run into your own experiment folder and edit those path
+strings there.
+
+
+1. Repository Layout And How To Run Scripts
+------------------------------------------
+
+Most scripts assume they are launched from a specific directory.
+
+Run model training scripts from the repo root:
+
+  cd /path/to/FMint_SDE_Coloured_Noise
+  bash run-caption-test.sh
+  bash run-finetune-caption.sh
+  bash run-finetune-samples_50.sh
+
+Run data-generation scripts from the data_preparation directory:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/data_preparation
+  bash datagen_fmint_sde_caption_test.sh
+  bash datagen_fmint_sde_ft.sh
+
+Run analysis scripts from the analysis directory:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/analysis
+  bash analysis_zeroshot_caption.sh
+  bash analysis_ft_caption.sh
+
+
+2. Environment Setup
+--------------------
+
+Activate the Python or conda environment that contains the repo dependencies.
+For example:
+
+  conda activate fmint-sde
+
+Set a HuggingFace cache directory. The current scripts use GPT-2 text embeddings
+for captioned models, so this cache should be on a filesystem with enough space.
+
+  export HF_HOME=/path/to/your/huggingface/cache
+
+If your cluster requires a custom CUDA library path, set it before launching:
+
+  export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+
+Select GPUs with CUDA_VISIBLE_DEVICES. The existing scripts hard-code examples
+such as:
+
+  CUDA_VISIBLE_DEVICES=3 python3 run.py ...
+
+Change those IDs to match your allocation. On Slurm, if the job gets one GPU,
+this is often enough:
+
+  export CUDA_VISIBLE_DEVICES=0
+
+
+3. Important Paths To Change For Your Cluster
+---------------------------------------------
+
+The current shell scripts were written for a previous filesystem rooted at:
+
+  /export/jyuan98/FMint_SDE
+
+When moving to a cluster, copy the scripts you need and replace these path groups:
+
+Data paths:
+
+  /export/jyuan98/FMint_SDE/data_preparation/...
+
+Checkpoint paths:
+
+  /export/jyuan98/FMint_SDE/save/user/ckpts/...
+
+Analysis output paths:
+
+  /export/jyuan98/FMint_SDE/analysis/results/...
+
+Log paths:
+
+  logs/...
+  analysis/results/...
+
+GPU IDs:
+
+  CUDA_VISIBLE_DEVICES=...
+
+Important note about run.py:
+
+  The current run.py writes checkpoints under:
+
+    /export/jyuan98/FMint_SDE/save/{user}/ckpts/{problem}/<timestamp>
+
+  and result/tensorboard outputs under:
+
+    /export/jyuan98/FMint_SDE/save/{user}/results/{problem}/<timestamp>
+
+  This path is hard-coded in run.py. If you do not want to edit code, make sure
+  that path exists on your cluster, or run on a filesystem where that path is
+  available. Otherwise, you will need a local copy of run.py with the save path
+  changed for your own experiment. The paper-reproduction commands themselves
+  are still the existing commands shown in the shell scripts.
+
+
+4. Table 1 Systems
+------------------
+
+Table 1 is the in-distribution experiment. The four pretraining systems are:
+
+  geombrownian_motion
+  mueller_overdamped
+  periodic_nonlinearoscillator
+  stochastic_lorenz
+
+The paper compares:
+
+  Few-shot without prompts
+  Few-shot with prompts
+  Fine-tuned without prompts
+  Fine-tuned with prompts
+  Coarse solution
+  Black-box surrogate
+  Single-SDE specialized model
+
+The FMint-SDE pieces are supported by the current repo scripts. The black-box
+surrogate and single-SDE specialized model comparisons require their trained
+baseline assets/checkpoints. If those are not present on your cluster, you can
+still reproduce the FMint-SDE and coarse-solver portions.
+
+
+5. Generate Data
+----------------
+
+For pretraining-style caption data, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/data_preparation
+  bash datagen_fmint_sde_caption_test.sh
+
+This script is a template for generating SDE data using:
+
+  datagen_fmint_sde.py
+
+The most important flags are:
+
+  --dir                output folder
+  --caption_mode       train or test
+  --name               train or test
+  --eqns               number of parameter settings
+  --quests             number of trajectories per parameter setting
+  --eqn_types          SDE system name
+  --length             fine-solver trajectory length
+  --dt                 fine timestep
+  --nv_step            coarse step multiplier
+  --num_repeat         number of noise realizations
+  --seed               random seed
+
+For fine-tuning and test datasets, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/data_preparation
+  bash datagen_fmint_sde_ft.sh
+
+This script uses:
+
+  datagen_fmint_sde_ft.py
+
+For Table 1 fine-tuning, the paper uses dataset size 50. In the existing sample
+scripts this is represented by directories such as:
+
+  SDE_ft_Aug12_50/<system_name>
+
+or:
+
+  SDE_ft_Aug1/<system_name>
+
+depending on which script you are following.
+
+
+6. Pretrain FMint-SDE
+---------------------
+
+Use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise
+  bash run-caption-test.sh
+
+The key command in that script is:
+
+  python3 run.py --problem icon_lm \
+    --epochs 50 \
+    --train_batch_size 32 \
+    --train_data_dirs /path/to/data \
+    --model_config_filename model_lm_config.json \
+    --train_config_filename train_lm_config.json \
+    --test_config_filename test_lm_config.json \
+    --train_data_globs train* \
+    --test_data_globs test* \
+    --test_demo_num_list 1,3,4 \
+    --model icon_lm \
+    --nodeterministic \
+    --seed 1 \
+    --vistest \
+    --tfboard
+
+Prompted versus no-prompt training:
+
+  With prompts:
+    Do not pass --loss_mode nocap. The default loss mode includes captions.
+
+  Without prompts:
+    Add:
+
+      --loss_mode nocap
+
+The existing run-caption-test.sh currently contains a no-prompt command and a
+commented prompt command. Uncomment or copy the version you need.
+
+
+7. Fine-Tune FMint-SDE
+----------------------
+
+For caption/prompt fine-tuning, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise
+  bash run-finetune-caption.sh
+
+For no-prompt fine-tuning on 50 trajectories, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise
+  bash run-finetune-samples_50.sh
+
+The key fine-tuning flags are:
+
+  --train_data_dirs       fine-tuning dataset folder
+  --restore_dir           pretrained checkpoint folder
+  --restore_step          pretrained checkpoint step
+  --steps_per_epoch       number of optimizer steps per epoch
+  --epochs                number of epochs
+  --save_freq             checkpoint save frequency
+  --loss_mode nocap       no-prompt fine-tuning
+
+The existing scripts use:
+
+  --steps_per_epoch 200
+
+Therefore:
+
+  5 epochs  x 200 steps_per_epoch = 1000 fine-tuning steps
+  10 epochs x 200 steps_per_epoch = 2000 fine-tuning steps
+
+The prompt fine-tuning script usually omits --loss_mode nocap. The no-prompt
+script includes:
+
+  --loss_mode nocap
+
+
+8. Evaluate Few-Shot And Fine-Tuned Models
+------------------------------------------
+
+For few-shot or zero-shot evaluation from a pretrained checkpoint, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/analysis
+  bash analysis_zeroshot_caption.sh
+
+For fine-tuned checkpoint evaluation, use:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/analysis
+  bash analysis_ft_caption.sh
+
+The key analysis command is:
+
+  python3 analysis.py --correction --backend jax \
+    --model icon_lm \
+    --test_config_filename test_lm_precise_config.json \
+    --model_config_filename model_lm_config.json \
+    --test_data_dirs /path/to/test/data \
+    --analysis_dir /path/to/output/results \
+    --restore_dir /path/to/checkpoint \
+    --restore_step 1000 \
+    --batch_size 10
+
+For no-prompt evaluation, add:
+
+  --loss_mode nocap
+  --test_caption_id_list -1
+
+For prompt evaluation, use the default caption mode or set the caption list used
+by the analysis script.
+
+The analysis output prints the metrics needed for the paper:
+
+  MAE   = mean absolute error
+  RMSE  = root mean squared error
+  strong = AMD, averaged maximum difference
+  weak   = MAD, maximum averaged difference
+
+The output also prints coarse-solution errors when --correction is enabled:
+
+  strong for coarse u
+  weak for coarse u
+
+
+9. Recreating Table 1
+---------------------
+
+To recreate the FMint-SDE rows of Table 1, run these four evaluation groups for
+each Table 1 system:
+
+  geombrownian_motion
+  mueller_overdamped
+  periodic_nonlinearoscillator
+  stochastic_lorenz
+
+Group A: Few-shot without prompts
+
+  Use analysis_zeroshot_caption.sh as the template.
+  Add --loss_mode nocap and --test_caption_id_list -1.
+  Restore from the no-prompt pretrained checkpoint.
+
+Group B: Few-shot with prompts
+
+  Use analysis_zeroshot_caption.sh as the template.
+  Restore from the prompted pretrained checkpoint.
+
+Group C: Fine-tuned without prompts
+
+  Train with run-finetune-samples_50.sh.
+  Evaluate with analysis_ft_caption.sh as the template.
+  Add --loss_mode nocap and --test_caption_id_list -1.
+
+Group D: Fine-tuned with prompts
+
+  Train with run-finetune-caption.sh.
+  Evaluate with analysis_ft_caption.sh as the template.
+
+For the coarse solution row, read the coarse metrics printed by analysis.py:
+
+  MAE, RMSE for coarse solution
+  strong for coarse u
+  weak for coarse u
+
+For black-box surrogate and single-SDE specialized rows, use the corresponding
+baseline scripts/checkpoints if they are available in your project copy. These
+baselines are separate trained models, not automatically produced by the FMint-
+SDE scripts above.
+
+
+10. Example Slurm Wrapper
+-------------------------
+
+You can submit the existing repo scripts from Slurm without changing the Python
+code. Create a small job file outside the repo or in your own experiment folder,
+for example:
+
+  #!/bin/bash
+  #SBATCH --job-name=fmint_table1
+  #SBATCH --partition=gpu
+  #SBATCH --gres=gpu:1
+  #SBATCH --cpus-per-task=8
+  #SBATCH --mem=64G
+  #SBATCH --time=24:00:00
+  #SBATCH --output=slurm-%j.out
+
+  set -euo pipefail
+
+  module load cuda
+  source ~/.bashrc
+  conda activate fmint-sde
+
+  export HF_HOME=/path/to/huggingface/cache
+  export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+  export CUDA_VISIBLE_DEVICES=0
+
+  cd /path/to/FMint_SDE_Coloured_Noise
+  bash run-finetune-samples_50.sh
+
+Submit with:
+
+  sbatch fmint_table1.sbatch
+
+For data generation, change the final lines to:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/data_preparation
+  bash datagen_fmint_sde_ft.sh
+
+For analysis, change the final lines to:
+
+  cd /path/to/FMint_SDE_Coloured_Noise/analysis
+  bash analysis_ft_caption.sh
+
+
+11. Experiment Map
+------------------
+
+Experiment 1: In-distribution SDE performance, Table 1
+
+  Data:
+    data_preparation/datagen_fmint_sde_caption_test.sh
+    data_preparation/datagen_fmint_sde_ft.sh
+
+  Pretraining:
+    run-caption-test.sh
+
+  Fine-tuning:
+    run-finetune-caption.sh
+    run-finetune-samples_50.sh
+
+  Evaluation:
+    analysis/analysis_zeroshot_caption.sh
+    analysis/analysis_ft_caption.sh
+
+Experiment 2: Computational efficiency
+
+  Use stochastic_lorenz data.
+  Time fine data generation with dt=1e-5.
+  Time coarse generation with nv_step chosen so k*dt=1e-3.
+  Time FMint-SDE correction using analysis.py.
+  analysis.py prints total inference time during analysis.
+
+Experiment 3: Out-of-distribution transfer
+
+  Systems:
+    ornstein_uhlenbeck
+    inhomogeneous_ornsteinuhlenbeck
+    double_well
+    coupled_doublewell
+    duffing_langevin
+    perturbed_nonlinearoscillator
+    predator_prey
+    fluxgate_sensor
+
+  Data:
+    data_preparation/datagen_fmint_sde_ft.sh
+
+  Fine-tuning:
+    run-finetune-caption.sh
+    run-finetune-samples_50.sh
+
+  Evaluation:
+    analysis/analysis_ft_caption.sh
+
+Experiment 4: Long-horizon rollout
+
+  Relevant files:
+    analysis/analysis_ft_rollout.sh
+    analysis/analysis.py
+
+  Note:
+    analysis.py contains a run_rollout() function, but the current main() calls
+    run_analysis() and run_convergence() while rollout is commented out. Check
+    your checkout before relying on rollout scripts. If you need rollout without
+    modifying source code, use analysis_ft_rollout.sh as the command reference
+    and run it in an experiment copy where rollout is enabled.
+
+Experiment 5: Sensitivity to fine-tuning data size
+
+  Relevant scripts:
+    run-finetune-samples_5.sh
+    run-finetune-samples_10.sh
+    run-finetune-samples_25.sh
+    run-finetune-samples_50.sh
+    run-finetune-samples_100.sh
+    run-finetune-samples_500.sh
+
+  For the full paper sweep, create or copy equivalent scripts for:
+
+    N = 250, 1000, 5000
+
+  using the same pattern as run-finetune-samples_50.sh.
+
+Experiment 6: Robustness across behavior regimes
+
+  Relevant script:
+    run-finetune-diff-param.sh
+
+  This contains commands/templates for different parameter regimes, including
+  Duffing, stochastic Lorenz, and predator-prey variants. Some regime choices
+  may require matching generated datasets or parameter-specific data scripts.
+
+Experiment 7: Multi-modal ablation study
+
+  Relevant scripts:
+    data_preparation/datagen_fmint_sde_caption_test.sh
+    run-caption-test.sh
+    analysis/analysis_zeroshot_caption.sh
+
+  Train two models from scratch:
+
+    With prompts:
+      use the default loss mode.
+
+    Without prompts:
+      add --loss_mode nocap.
+
+  Evaluate with different numbers of numerical context demos K:
+
+    K = 0, 1, 2, 3, 4
+
+  In analysis.py this is controlled through:
+
+    --test_demo_num_list
+    --sweep_demo_nums
+
+
+12. Practical Checklist For Table 1
+-----------------------------------
+
+1. Copy the relevant shell scripts into your own experiment folder.
+2. Replace /export/jyuan98/FMint_SDE paths with your cluster paths.
+3. Set HF_HOME and CUDA_VISIBLE_DEVICES.
+4. Generate or locate the Table 1 data folders.
+5. Pretrain the prompted and no-prompt FMint-SDE models.
+6. Fine-tune prompted and no-prompt models on dataset size 50.
+7. Run zero-shot/few-shot evaluation.
+8. Run fine-tuned evaluation.
+9. Record MAE, RMSE, strong, and weak from the logs.
+10. Map strong to AMD and weak to MAD.
+11. Add baseline rows only if you have black-box surrogate and single-SDE
+    specialized checkpoint assets available.
+
+
+13. Common Mistakes
+-------------------
+
+Running scripts from the wrong directory:
+
+  Data scripts should be run from data_preparation.
+  Analysis scripts should be run from analysis.
+  Training scripts should be run from the repo root.
+
+Using the wrong checkpoint:
+
+  Few-shot rows use pretrained checkpoints.
+  Fine-tuned rows use fine-tuned checkpoints.
+  Prompt and no-prompt checkpoints are different.
+
+Forgetting --loss_mode nocap:
+
+  Use --loss_mode nocap for no-prompt training or evaluation.
+
+Confusing iterations with epochs:
+
+  The existing fine-tuning scripts use steps_per_epoch=200.
+  5 epochs means 1000 optimizer steps.
+  10 epochs means 2000 optimizer steps.
+
+Comparing the wrong metric:
+
+  Table metrics are MAE, RMSE, AMD, MAD.
+  analysis.py prints AMD as strong and MAD as weak.
+

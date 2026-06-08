@@ -203,13 +203,14 @@ def run_train():
 		runner.restore(FLAGS.restore_dir, FLAGS.restore_step, restore_opt_state=False)
 		
 	if FLAGS.tfboard:
-		results_dir = f'/export/jyuan98/FMint_SDE/save/{FLAGS.user}/results/{FLAGS.problem}/'+ stamp
+		# results_dir = f'/export/jyuan98/FMint_SDE/save/{FLAGS.user}/results/{FLAGS.problem}/'+ stamp
+		results_dir = f'/export/nnoorani/FMint_SDE_Coloured_Noise/save/{FLAGS.user}/results/{FLAGS.problem}/'+ stamp
 		
 		if not os.path.exists(results_dir):
 			os.makedirs(results_dir)
 		file_writer = tf.summary.create_file_writer(results_dir)
 		file_writer.set_as_default()
-		ckpt_dir = f'/export/jyuan98/FMint_SDE/save/{FLAGS.user}/ckpts/{FLAGS.problem}/'+ stamp
+		ckpt_dir = f'/export/nnoorani/FMint_SDE_Coloured_Noise/save/{FLAGS.user}/ckpts/{FLAGS.problem}/'+ stamp
 		
 		if not os.path.exists(ckpt_dir):
 			os.makedirs(ckpt_dir)
