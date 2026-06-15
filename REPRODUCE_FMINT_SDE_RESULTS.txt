@@ -369,6 +369,8 @@ for example:
   #SBATCH --time=24:00:00
   #SBATCH --output=slurm-%j.out
 
+  #SBATCH --account=hzyang-prj-aac
+
   set -euo pipefail
 
   module load cuda
@@ -396,6 +398,16 @@ For analysis, change the final lines to:
   cd /path/to/FMint_SDE_Coloured_Noise/analysis
   bash analysis_ft_caption.sh
 
+"""
+#SBATCH --job-name=padding-bench
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:a100:4 (request 4 a100s, gpu:a100:1 (1 gpu), gpu:a100_1g.5gb:1 (1/7))
+#SBATCH --mem=200G
+#SBATCH --time=03:00:00
+#SBATCH --partition=gpu
+"""
 
 11. Experiment Map
 ------------------

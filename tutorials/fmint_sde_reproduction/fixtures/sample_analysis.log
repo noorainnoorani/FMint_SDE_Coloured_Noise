@@ -1,0 +1,9 @@
+MAE: {'stochastic_lorenz': [0.0123]}, RMSE: {'stochastic_lorenz': [0.0456]}
+MAE, RMSE for coarse soluion:  {'stochastic_lorenz': [0.0987, 0.1234, 0.0100]}
+========== Error by number of demos (convergence) ==========
+  equation=stochastic_lorenz, num_demos=0: MAE=1.000000e-01, RMSE=2.000000e-01, strong=3.000000e-01, weak=4.000000e-01
+  equation=stochastic_lorenz, num_demos=4: MAE=1.000000e-02, RMSE=2.000000e-02, strong=3.000000e-02, weak=4.000000e-02
+============================================================
+strong: {'stochastic_lorenz': [0.0300]}, weak: {'stochastic_lorenz': [0.0400]}
+strong for coarse u: {'stochastic_lorenz': [0.3000]}, weak for coarse u: {'stochastic_lorenz': [0.4000]}
+ANALYSIS TOTAL INFERENCE TIME: 12.5000 seconds
