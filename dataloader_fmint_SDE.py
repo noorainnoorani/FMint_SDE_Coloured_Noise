@@ -1145,7 +1145,8 @@ if __name__ == "__main__":
 
 		config = utils.load_json('config_data/train_lm_config.json')
 		config = utils.load_json('config_data/test_lm_config.json')
-		file_names = '/export/jyuan98/FMint_SDE/data_preparation/SDEs/perturbed_nonlinearoscillator/test*'
+		# file_names = '/export/jyuan98/FMint_SDE/data_preparation/SDEs/perturbed_nonlinearoscillator/test*'
+		file_names = '/export/nnoorani/FMint_SDE_Coloured_Noise/data_preparation/SDEs/perturbed_nonlinearoscillator/test*'
 
 		config['load_list'] = []
 		test(file_names, config)
