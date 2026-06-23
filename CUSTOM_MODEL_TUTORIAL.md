@@ -123,7 +123,7 @@ conda activate icon
 
 conda install -c conda-forge cudatoolkit=11.8
 pip install tensorflow==2.15.0
-conda install -c conda-forge cudnn=8.9.2.26
+conda install -c conda-forge cudnn=8.9.7.29
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 pip install -r env.txt

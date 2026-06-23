@@ -13,9 +13,13 @@ To make sure that tensorflow detect gpus, first install the following
 ```
 conda install -c conda-forge cudatoolkit=11.8
 pip install tensorflow==2.15.0
-conda install -c conda-forge cudnn=8.9.2.26
+conda install -c conda-forge cudnn=8.9.7.29
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
+
+`cudnn=8.9.2.26` is not available from the current conda-forge or NVIDIA
+linux-64 channels. The `8.9.7.29` build is available on conda-forge and keeps
+the install on cuDNN 8.9 for the JAX `cuda12.cudnn89` wheel below.
 
 Then install necessary packages
 ```

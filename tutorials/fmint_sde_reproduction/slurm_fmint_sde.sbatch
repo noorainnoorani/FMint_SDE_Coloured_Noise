@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=fmint_sde_repro
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=24:00:00
@@ -12,7 +12,11 @@ set -euo pipefail
 
 # Example submissions:
 #   sbatch tutorials/fmint_sde_reproduction/slurm_fmint_sde.sbatch exp1 all both
+#   sbatch --gres=gpu:v100:1 tutorials/fmint_sde_reproduction/slurm_fmint_sde.sbatch exp1 all both
 #   sbatch --array=1-7 tutorials/fmint_sde_reproduction/slurm_fmint_sde.sbatch
+#
+# The default GPU request is gpu:a100:1. Change the #SBATCH --gres line above,
+# or override it at submit time with a GPU type available on your HPCC account.
 #
 # If submitted as an array with no first argument, array task 1 maps to exp1,
 # task 2 maps to exp2, and so on.
@@ -40,4 +44,3 @@ bash "$SCRIPT_DIR/reproduce_fmint_sde.sh" \
   --experiment "$EXPERIMENT" \
   --stage "$STAGE" \
   --mode "$MODE"
-
