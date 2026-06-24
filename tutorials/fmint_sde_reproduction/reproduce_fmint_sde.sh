@@ -302,7 +302,7 @@ train_pretrain() {
   local extra=()
   [[ "$mode" == "nocap" ]] && extra=(--loss_mode nocap)
   run_logged "$REPO_ROOT" "$LOG_ROOT/$EXPERIMENT/pretrain/${mode}.log" \
-    "$PYTHON_BIN" run.py --problem "$PROBLEM" --epochs 50 \
+    "$PYTHON_BIN" run.py --user "$RUN_USER" --problem "$PROBLEM" --epochs 50 \
     --train_batch_size 32 --train_data_dirs "$(pretrain_data_dir)" \
     --model_config_filename model_lm_config.json \
     --train_config_filename train_lm_config.json \
@@ -333,7 +333,7 @@ train_finetune() {
       data_dir="$(ft_data_dir "$n" "$system")"
     fi
     run_logged "$REPO_ROOT" "$LOG_ROOT/$EXPERIMENT/finetune/${mode}/${system}_N${n}_${TRAIN_STEPS}steps.log" \
-      "$PYTHON_BIN" run.py --problem "$PROBLEM" --epochs "$epochs" \
+      "$PYTHON_BIN" run.py --user "$RUN_USER" --problem "$PROBLEM" --epochs "$epochs" \
       --train_batch_size "$batch_size" --train_data_dirs "$data_dir" \
       --restore_dir "$restore_dir" --restore_step "$PRETRAIN_RESTORE_STEP" \
       --steps_per_epoch 200 \
