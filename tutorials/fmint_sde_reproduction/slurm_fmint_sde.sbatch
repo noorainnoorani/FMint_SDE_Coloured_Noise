@@ -21,7 +21,13 @@ set -euo pipefail
 # If submitted as an array with no first argument, array task 1 maps to exp1,
 # task 2 maps to exp2, and so on.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -n "${SLURM_SUBMIT_DIR:-}" && -f "$SLURM_SUBMIT_DIR/tutorials/fmint_sde_reproduction/reproduce_fmint_sde.sh" ]]; then
+  SCRIPT_DIR="$SLURM_SUBMIT_DIR/tutorials/fmint_sde_reproduction"
+elif [[ -n "${SLURM_SUBMIT_DIR:-}" && -f "$SLURM_SUBMIT_DIR/reproduce_fmint_sde.sh" ]]; then
+  SCRIPT_DIR="$SLURM_SUBMIT_DIR"
+else
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 EXPERIMENT="${1:-}"
 STAGE="${2:-all}"
 MODE="${3:-both}"
